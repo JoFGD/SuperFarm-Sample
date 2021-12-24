@@ -182,7 +182,7 @@ contract Shop is ERC1155Holder, Ownable {
     @param _assetId The index of the asset from the item's asset-price pairs to
                     attempt this purchase using.
   */
-    function purchaseItem(uint256 _itemId, uint256 _amount, uint256 _assetId) external payable {
+       function purchaseItem(uint256 _itemId, uint256 _amount, uint256 _assetId) external payable {
         ShopItem storage item = inventory[_itemId];
         require(item.amount >= _amount && item.amount != 0,
             "There is not enough of your desired item in stock to purchase.");
@@ -191,7 +191,6 @@ contract Shop is ERC1155Holder, Ownable {
         PricePair memory sellingPair = prices[_itemId][_assetId];
 
         uint256 balance = msg.value;
-        bool check = false;
 
         if ((sellingPair.assetType == 1) == false) {
             IERC20 sellingAsset = IERC20(sellingPair.asset);
@@ -216,17 +215,14 @@ contract Shop is ERC1155Holder, Ownable {
             require(success, "Shop owner transfer failed.");
             inventory[_itemId].amount = inventory[_itemId].amount.sub(_amount);
             item.token.safeTransferFrom(address(this), msg.sender, item.id, _amount, "");
-            check = true;
-        
+
             // Otherwise, attempt to sell for an ERC20 token.
         } else {
             sellingAsset.safeTransferFrom(msg.sender, feeOwner, feeValue);
             sellingAsset.safeTransferFrom(msg.sender, royaltyOwner, royaltyValue);
             sellingAsset.safeTransferFrom(msg.sender, owner(), tokenPrice.sub(feeValue).sub(royaltyValue));
-            check = true;
         }
-
-        require(check);
+        
         inventory[_itemId].amount = inventory[_itemId].amount.sub(_amount);
         item.token.safeTransferFrom(address(this), msg.sender, item.id, _amount, "");
     }
